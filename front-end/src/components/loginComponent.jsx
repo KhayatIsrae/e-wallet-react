@@ -1,7 +1,20 @@
+import { useState } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
+import { finduserbymail } from "../data/database";
 
-export default function LoginComponent() {
+export default function LoginComponent({setShowLogin,setUser}) {
+    const [password,setPassword]=useState("");
+    const [email,setEmail]=useState("");
+
+    const handleLogin=()=>{
+        let user=finduserbymail(email,password);
+        if(user){
+            sessionStorage.setItem('currentUser',JSON.stringify(user));
+            setUser(user);
+            setShowLogin(false);
+        }else  alert('bad credentials !!!');
+    }
     return (
         <>
             <Header />
@@ -19,6 +32,8 @@ export default function LoginComponent() {
                                     type="email"
                                     placeholder="Adresse e-mail"
                                     required
+                                    onChange={(e)=> setEmail(e.target.value)
+                                    }
                                 />
                             </div>
                             <div className="input-group">
@@ -26,11 +41,13 @@ export default function LoginComponent() {
                                     type="password"
                                     placeholder="Mot de passe"
                                     required
+                                    onChange={(e)=> setPassword(e.target.value)
+                                    }
                                 />
                                 <span id="display" className="toggle-password" >👁</span>
                             </div>
                             <p id="result"></p>
-                            <button id="submitbtn" type="button" className=" btn btn-primary">
+                            <button id="submitbtn" type="button" className=" btn btn-primary" onClick={()=>handleLogin()}>
                                 Se connecter
                             </button>
                         </form>

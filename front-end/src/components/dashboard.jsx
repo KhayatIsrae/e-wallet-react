@@ -1,11 +1,14 @@
 import Header from "./Header";
 import Footer from "./Footer";
 
-export default function Dashboard() {
+export default function Dashboard({ user }) {
+    let Ctransactions = user.wallet.transactions.filter((t) => (t.type === 'credit' || t.type === 'recharge') && t.status == "validee");
+    let monthlyIncome = Ctransactions.reduce((acc, curr) => acc + curr.amount, 0); 
+    let Dtransactions = user.wallet.transactions.filter((t) => t.type === 'debit');
+    let monthlyExpenses = Dtransactions.reduce((acc, curr) => acc + curr.amount, 0);
     return (
         <>
             <Header />
-
             <main className="dashboard-main">
                 <div className="dashboard-container">
                     <aside className="dashboard-sidebar">
@@ -49,7 +52,7 @@ export default function Dashboard() {
                     <div className="dashboard-content">
                         <section id="overview" className="dashboard-section active">
                             <div className="section-header">
-                                <h2>Bonjour, <span id="greetingName"> ? </span> !</h2>
+                                <h2>Bonjour, <span id="greetingName"> {user.name} </span> !</h2>
                                 <p className="date-display" id="currentDate"></p>
                             </div>
                             <div className="summary-cards">
@@ -59,7 +62,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="card-details">
                                         <span className="card-label">Solde disponible</span>
-                                        <span className="card-value" id="availableBalance">? </span>
+                                        <span className="card-value" id="availableBalance">{user.wallet.balance} </span>
                                     </div>
                                 </div>
 
@@ -69,7 +72,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="card-details">
                                         <span className="card-label">Revenus </span>
-                                        <span className="card-value" id="monthlyIncome">?</span>
+                                        <span className="card-value" id="monthlyIncome">{monthlyIncome}</span>
                                     </div>
                                 </div>
 
@@ -79,7 +82,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="card-details">
                                         <span className="card-label">Dépenses </span>
-                                        <span className="card-value" id="monthlyExpenses">?</span>
+                                        <span className="card-value" id="monthlyExpenses">{monthlyExpenses}</span>
                                     </div>
                                 </div>
 
@@ -89,7 +92,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="card-details">
                                         <span className="card-label">Cartes actives</span>
-                                        <span className="card-value" id="activeCards">?</span>
+                                        <span className="card-value" id="activeCards">{user.wallet.cards.length}</span>
                                     </div>
                                 </div>
                             </div>
@@ -115,9 +118,19 @@ export default function Dashboard() {
                                     <h3>Transactions récentes</h3>
                                 </div>
                                 <div className="transactions-list" id="recentTransactionsList">
+                                    {
+                                        user.wallet.transactions.map((transaction, index) => {
+                                            return (
+                                                <div key={index} className="transaction-item">
+                                                    <div>{transaction.date}</div>
+                                                    <div>{transaction.amount} MAD</div>
+                                                    <div>{transaction.type}</div>
+                                                    <div>{transaction.status}</div>
+                                                </div>
+                                            )
+                                        })
+                                    }
 
-                                    <div className="transaction-item">
-                                    </div>
                                 </div>
                             </div>
                         </section>
