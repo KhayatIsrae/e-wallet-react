@@ -8,9 +8,11 @@ import { finduserbymail } from "./data/database";
 function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [user,setUser]=useState(finduserbymail("Ali@example.com","1232"));
+  const [balance,setBalance]=useState(finduserbymail("Ali@example.com","1232").wallet.balance);
+  const [transactions,setTransactions]=useState(finduserbymail("Ali@example.com","1232").wallet.transactions);
   
-  if (user) return <Dashboard user={user} />;
-  if (showLogin) return <LoginComponent setShowLogin={setShowLogin} setUser={setUser} />;
+  if (user) return <Dashboard user={user} balance={balance} setBalance={setBalance} setTransactions={setTransactions}  transactions={transactions} />;
+  if (showLogin) return <LoginComponent setShowLogin={setShowLogin} setUser={setUser} setBalace={setBalace} setTransactions={setTransactions}/>;
   return <MainComponent setShowLogin={setShowLogin} />;
 }
 export default App
