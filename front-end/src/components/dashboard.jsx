@@ -16,6 +16,78 @@ export default function Dashboard({ user, balance, transactions, setBalance, set
     const [mont, setMont] = useState(0);
     const [amt, setAmt] = useState(0);
     const [transfering, setTransfering] = useState(false);
+
+
+    const [charging, setCharging] = useState(false);
+    const [carteCharger, setCarteCharger] = useState('');
+    const [montantCharger, setMontantCharger] = useState(0);
+
+
+
+    const checkAmount = (amt) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+            if (amt < 10 || amt > 5000) reject("Montant invalide (entre 10 et 5000 MAD)");
+            else resolve();
+        }, 2000);
+    });
+
+    const checkExpiry = (numcard) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const carte = getCard(user.account, numcard);
+            if (!carte) return reject("Carte introuvable");
+            const today = new Date();
+            const expiry = new Date(carte.expiry);
+            if (today > expiry) reject("Carte expirée !");
+            else resolve();
+        }, 2000);
+    });
+
+    const checkCardSolde = (mont, numcard) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const card = getCard(user.account, numcard);
+            if (card.balance < mont) reject("Solde carte insuffisant !");
+            else resolve();
+        }, 2000);
+    });
+
+    const creerTR = (mont, carte, status = "validee") => {
+        const transaction = {
+            id: Math.random(),
+            type: 'recharge',
+            amount: mont,
+            date: new Date().toLocaleString(),
+            from: carte,
+            to: user.name,
+            status,
+        };
+        setTransactions(prev => [...prev, transaction]);
+    };
+
+    const rechargerBalance = (mont) => {
+        setBalance(prev => prev + mont);
+    };
+
+    async function handleCharger() {
+        const montant = Number(montantCharger);
+        const carte = carteCharger;
+
+        setCharging(true);
+        try {
+            await checkAmount(montant);
+            await checkExpiry(carte);
+            await checkCardSolde(montant, carte);
+            creerTR(montant, carte, "validee");
+            rechargerBalance(montant);
+            alert("Rechargement réussi !");
+            setShowChargerSection(false);
+        } catch (err) {
+            alert(err);
+            creerTR(montant, carte, "echoue");  // transaction échouée enregistrée
+        } finally {
+            setCharging(false);
+        }
+    }
+
     const verifyBen = (numcompte) => new Promise((resolve, reject) => {
         setTimeout(() => {
             const beneficiary = finduserbyaccount(numcompte);
@@ -278,8 +350,17 @@ export default function Dashboard({ user, balance, transactions, setBalance, set
                                             <label htmlFor="sourceCard">
                                                 <i className="fas fa-credit-card"></i> Depuis ma carte
                                             </label>
-                                            <select id="sourceCardCharger" name="sourceCard" required defaultValue="">
-                                                <option value="" disabled >Sélectionner une carte</option>
+                                            <select
+                                                id="sourceCardCharger"
+                                                defaultValue=""
+                                                onChange={(e) => setCarteCharger(e.target.value)}
+                                            >
+                                                <option value="" disabled>Sélectionner une carte</option>
+                                                {user.wallet.cards.map((card, i) => (
+                                                    <option key={i} value={card.numcards}>
+                                                        {card.type + "****" + card.numcards}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div className="form-group">
@@ -287,18 +368,33 @@ export default function Dashboard({ user, balance, transactions, setBalance, set
                                                 <i className="fas fa-euro-sign"></i> Montant
                                             </label>
                                             <div className="amount-input">
-                                                <input type="number" id="amountCharger" name="amount" min="1" step="0.01" placeholder="0.00"
-                                                    required />
+                                                <input
+                                                    type="number"
+                                                    id="amountCharger"
+                                                    min="10"
+                                                    max="5000"
+                                                    step="0.01"
+                                                    placeholder="0.00"
+                                                    onChange={(e) => setMontantCharger(Number(e.target.value))}
+                                                />
                                                 <span className="currency">MAD</span>
                                             </div>
                                         </div>
 
                                         <div className="form-actions">
-                                            <button type="button" className="btn btn-secondary" id="cancelChargerBtn">
+                                            <button type="button" className="btn btn-secondary" id="cancelChargerBtn" onClick={() => setShowChargerSection(false)}>
                                                 Annuler
                                             </button>
-                                            <button type="submit" className="btn btn-primary" id="submitChargerBtn">
-                                                <i className="fas fa-paper-plane"></i> charger
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleCharger();
+                                                }}
+                                            >
+                                                <i className="fas fa-plus-circle"></i>
+                                                {charging ? "Rechargement en cours..." : "Charger"}
                                             </button>
                                         </div>
                                     </form>
@@ -370,7 +466,7 @@ export default function Dashboard({ user, balance, transactions, setBalance, set
                                             </div>
                                         </div>
                                         <div className="form-actions">
-                                            <button type="button" className="btn btn-secondary" id="cancelTransferBtn">
+                                            <button type="button" className="btn btn-secondary" id="cancelTransferBtn" onClick={() => setShowTransfer(false)}>
                                                 Annuler
                                             </button>
                                             <button type="submit" className="btn btn-primary" id="submitTransferBtn" onClick={(e) => {
